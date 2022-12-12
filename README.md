@@ -2,7 +2,7 @@
 
 Color Visuliser is an extention that lets you visulize color codes
 
-![Showcase](https://github.com/RobertArnosson/color-visualizer/blob/699173854122463bbffe7a14c05aad3656d748d6/images/showcase_3.png?raw=true)
+![Showcase](https://github.com/RobertArnosson/color-visualizer/blob/0c6e6949bf0bcd484608a33ee93b1d78f02aadb9/images/showcase_4.png?raw=true)
 
 ## Features
 
