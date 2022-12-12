@@ -31,3 +31,10 @@ All notable changes to the "color-visualizer" extension will be documented in th
 - Removed animations
 - Removed RGB (will return)
 - Removed CMYK (will return)
+
+## [0.1.3]
+
+### Changes
+
+- Added color name
+- Added more checks for valid selection and hex code

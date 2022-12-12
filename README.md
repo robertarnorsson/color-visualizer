@@ -25,10 +25,14 @@ Cleaner Design
 
 ### 0.1.1
 
-Color Visualizer first update
+Color Visualizer First Update
 
 ### 0.1.2
 
 Visual Update
+
+### 0.1.3
+
+Color Name Update
 
 **Enjoy!**
