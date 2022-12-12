@@ -13,7 +13,7 @@ This extention will give you a window that will show you the color that you have
 This extension contributes the following settings:
 
 * `color-visualizer.enable`: Enable/disable this extension.
-* `color-visualizer.start`: Open the main window.
+* `color-visualizer.color-v`: Open the main window.
 
 ## Known Issues
 
@@ -34,5 +34,9 @@ Visual Update
 ### 0.1.3
 
 Color Name Update
+
+### 0.1.4
+
+Better Code Update
 
 **Enjoy!**

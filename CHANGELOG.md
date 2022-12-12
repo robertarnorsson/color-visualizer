@@ -38,3 +38,11 @@ All notable changes to the "color-visualizer" extension will be documented in th
 
 - Added color name
 - Added more checks for valid selection and hex code
+
+## [0.1.4]
+
+### Changes
+
+- Changed commad from start to color-v
+- Re-worked and re-wrote code
+- Added better checks for selection and valid hex code

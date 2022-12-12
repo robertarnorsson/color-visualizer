@@ -16,7 +16,7 @@ function activate(context) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposable1 = vscode.commands.registerCommand('color-visualizer.start', function () {
+	let disposable1 = vscode.commands.registerCommand('color-visualizer.color-v', function () {
 		// The code you place here will be executed every time your command is executed
 
 		// Display a message box to the user
@@ -36,40 +36,39 @@ function activate(context) {
 
 	function updateColor() {
 
+		// Check if the selection is empty or not
 		function checkSelection() {
-			const editor = vscode.window.activeTextEditor;
-			if (!editor) {
-			  return false;
-			}
-		  
+			const editor = vscode.window.activeTextEditor;		  
 			const selection = editor.selection;
-			if (selection.isEmpty) {
-			  return false;
+			// Selection is empty
+			if (selection.isEmpty == true) {
+				return false;
 			}
-		  
+			
+			// The selection is not empty
 			return true;
-		  }
+		}
+		
+		// An if statement to run code if the selection is not empty
+		if (checkSelection() == true) {
 
-		if (checkSelection) {
+			// Get active editor, selected text and then the text from the selected text
 			const editor = vscode.window.activeTextEditor;
 			const selectedText = editor.selection;
 			const text = editor.document.getText(selectedText);
-		
-			function isHexColor (hextext) {
-				let text = String(hextext)
-				let result = text.includes("#");
-				let lenght = text.length;
-				return [result, lenght];
+
+			// Check for valid hex code
+			function isValidHexCode(hexCode) {
+				// Regular expression that matches a string of 6 hexadecimal characters
+				const hexCodeRegex = /^#[0-9A-Fa-f]{6}$/;
+				return hexCodeRegex.test(hexCode);
 			}
 
-			var isHexList = isHexColor(text);
+			if (isValidHexCode(text) == true) {
 
-			let isHex = isHexList[0]
-			let hexlenght = isHexList[1]
+				let hex = text
 
-			if (isHex == true && hexlenght == 7) {
-
-				// get contrast of color
+				// Find the contrast of the color and then change the text color to white or black depending on the contrast
 
 				function getRGB(c) {
 					return parseInt(c, 16) || c;
@@ -101,71 +100,18 @@ function activate(context) {
 				
 					return whiteContrast > blackContrast ? "#ffffff" : "#000000";
 				}
-
+				
+				// Get color name
 				function getName(hex) {
 					return ntc.name(hex)[1]
 				}
 
-				//function hexToRGB (hex) {
-				//	var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-				//	return result ? {
-				//		R: parseInt(result[1], 16),
-				//		G: parseInt(result[2], 16),
-				//		B: parseInt(result[3], 16)
-				//	} : null;
-				//}
+				globalPanel.webview.html = getWebviewContent(hex, getName(hex), getTextColor(hex))
 
-				//function hexToCMYK (hex) {
-				//	var computedC = 0;
-				//	var computedM = 0;
-				//	var computedY = 0;
-				//	var computedK = 0;
-				//
-				//	var r = hexToRGB(hex).R
-				//	var g = hexToRGB(hex).G
-				//	var b = hexToRGB(hex).B
-				//
-				//	// BLACK
-				//	if (r==0 && g==0 && b==0) {
-				//	computedK = 1;
-				//	return [0,0,0,1];
-				//	}
-				//
-				//	computedC = 1 - (r/255);
-				//	computedM = 1 - (g/255);
-				//	computedY = 1 - (b/255);
-				//
-				//	var minCMY = Math.min(computedC,Math.min(computedM,computedY));
-				//
-				//	computedC = (computedC - minCMY) / (1 - minCMY) ;
-				//	computedM = (computedM - minCMY) / (1 - minCMY) ;
-				//	computedY = (computedY - minCMY) / (1 - minCMY) ;
-				//	computedK = minCMY;
-				//
-				//	return [Math.round(computedC*100),Math.round(computedM*100),Math.round(computedY*100),Math.round(computedK*100)];
-				//}
-
-				if (text != "") {
-					var hex = text
-
-					//var R = hexToRGB(hex).R
-					//var G = hexToRGB(hex).G
-					//var B = hexToRGB(hex).B
-
-					globalPanel.webview.html = getWebviewContent(hex, getName(hex), getTextColor(hex)
-
-					//R,
-					//G,
-					//B,
-
-					//hexToCMYK(hex)[0],
-					//hexToCMYK(hex)[1],
-					//hexToCMYK(hex)[2],
-					//hexToCMYK(hex)[3]
-					)
-				};
 			}
+
 		}
+
 	};
 	setInterval(updateColor, 500)
 
@@ -215,7 +161,7 @@ function getWebviewContent(colorhex, colorname, textcolorHB) {
 		color: ${textcolorHB};
 		border: none;
 		background: none;
-		margin: 0;
+		margin-botton: 30px;
 		padding: 0;
 	}
 	.squaretextname {
