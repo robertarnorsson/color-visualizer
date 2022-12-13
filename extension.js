@@ -112,7 +112,7 @@ function activate(context) {
 					return ntc.name(hex)[1]
 				}
 
-				globalPanel.webview.html = getWebviewContent(hex, getName(hex), getTextColor(hex))
+				globalPanel.webview.html = getWebviewContent(hex.toUpperCase(), getName(hex), getTextColor(hex))
 			}
 
 		}
