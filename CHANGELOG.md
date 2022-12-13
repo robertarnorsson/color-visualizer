@@ -62,3 +62,7 @@ All notable changes to the "color-visualizer" extension will be documented in th
 ### Changes
 
 - Makes the color visualizer window open in a new window
+
+### Added
+
+- Chamges hex to upper case

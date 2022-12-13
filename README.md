@@ -46,6 +46,10 @@ Better Code Update
 
 ### 0.1.5
 
-Better Selection Checking
+Better Selection Checking Update
+
+### 0.1.6
+
+Hex To UPPER Update
 
 **Enjoy!**
