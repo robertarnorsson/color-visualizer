@@ -39,4 +39,8 @@ Color Name Update
 
 Better Code Update
 
+### 0.1.5
+
+Better Selection Checking
+
 **Enjoy!**

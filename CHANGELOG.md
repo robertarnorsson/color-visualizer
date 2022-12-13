@@ -46,3 +46,9 @@ All notable changes to the "color-visualizer" extension will be documented in th
 - Changed commad from start to color-v
 - Re-worked and re-wrote code
 - Added better checks for selection and valid hex code
+
+## [0.1.5]
+
+### Changes
+
+- Re-worked the check for valid selection

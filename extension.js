@@ -11,7 +11,7 @@ const ntc = require('ntcjs');
  */
 function activate(context) {
 
-	var globalPanel
+	let globalPanel
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with  registerCommand
@@ -19,14 +19,11 @@ function activate(context) {
 	let disposable1 = vscode.commands.registerCommand('color-visualizer.color-v', function () {
 		// The code you place here will be executed every time your command is executed
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Opend window successfully!');
-
 		// Create and show a new webview
 		const panel = vscode.window.createWebviewPanel(
 			'colorVis', // Identifies the type of the webview. Used internally
 			'Color Visualizer', // Title of the panel displayed to the user
-			vscode.ViewColumn.One, // Editor column to show the new webview panel in.
+			vscode.ViewColumn.Beside, // Editor column to show the new webview panel in.
 			{} // Webview options. More on these later.
 		  );
 		// And set its HTML content
@@ -38,15 +35,24 @@ function activate(context) {
 
 		// Check if the selection is empty or not
 		function checkSelection() {
-			const editor = vscode.window.activeTextEditor;		  
-			const selection = editor.selection;
-			// Selection is empty
-			if (selection.isEmpty == true) {
-				return false;
-			}
+			// Get the active editor
+			const editor = vscode.window.activeTextEditor;
 			
-			// The selection is not empty
-			return true;
+			// Check if the editor is defined and not null
+			if (editor) {
+			  // Get the selection from the editor
+			  const selection = editor.selection;
+			  // Selection is empty
+				if (selection.isEmpty == true) {
+					return false;
+				}
+			  
+				// The selection is not empty
+				return true;
+			} else {
+				// No editor is open
+			  	return false;
+			}
 		}
 		
 		// An if statement to run code if the selection is not empty
@@ -107,7 +113,6 @@ function activate(context) {
 				}
 
 				globalPanel.webview.html = getWebviewContent(hex, getName(hex), getTextColor(hex))
-
 			}
 
 		}
