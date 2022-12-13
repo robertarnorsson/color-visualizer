@@ -34,7 +34,7 @@ All notable changes to the "color-visualizer" extension will be documented in th
 
 ## [0.1.3]
 
-### Changes
+### Added
 
 - Added color name
 - Added more checks for valid selection and hex code
@@ -52,3 +52,13 @@ All notable changes to the "color-visualizer" extension will be documented in th
 ### Changes
 
 - Re-worked the check for valid selection
+
+### Fixed
+
+- Error when minimizing the editor
+
+## [0.1.6]
+
+### Changes
+
+- Makes the color visualizer window open in a new window

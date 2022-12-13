@@ -4,9 +4,11 @@ Color Visuliser is an extention that lets you visulize color codes
 
 ![Showcase](https://github.com/RobertArnosson/color-visualizer/blob/0c6e6949bf0bcd484608a33ee93b1d78f02aadb9/images/showcase_4.png?raw=true)
 
+
 ## Features
 
-This extention will give you a window that will show you the color that you have selected with your cursor. The extention works with any language 
+This extention will give you a window that will show you the color that you have selected with your cursor. The extention works with any language
+
 
 ## Extension Settings
 
@@ -15,13 +17,16 @@ This extension contributes the following settings:
 * `color-visualizer.enable`: Enable/disable this extension.
 * `color-visualizer.color-v`: Open the main window.
 
+
 ## Known Issues
 
-This is the first development of this extention and bugs and issues are expected
+There are no current know issues (if you find any issues please contact me: **colorvisualizerex@gmail.com**)
+
+## What to expect
+
+In the future you will be able to select **RGB** and **CMYK** values and see the color and hex
 
 ## Release Notes
-
-Cleaner Design
 
 ### 0.1.1
 
