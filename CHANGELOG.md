@@ -65,4 +65,10 @@ All notable changes to the "color-visualizer" extension will be documented in th
 
 ### Added
 
-- Chamges hex to upper case
+- Change hex to upper case
+
+## [0.2.0]
+
+### Added
+
+- Select RGB value and get the right color (123, 32, 5 = #7B2005)

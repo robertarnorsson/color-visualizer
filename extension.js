@@ -63,16 +63,62 @@ function activate(context) {
 			const selectedText = editor.selection;
 			const text = editor.document.getText(selectedText);
 
-			// Check for valid hex code
-			function isValidHexCode(hexCode) {
-				// Regular expression that matches a string of 6 hexadecimal characters
-				const hexCodeRegex = /^#[0-9A-Fa-f]{6}$/;
-				return hexCodeRegex.test(hexCode);
+			// Function to check if a string is a hex code or RGB values
+			function checkHexOrRgb(text) {
+				// Regular expression to check if string is a hex code
+				const hexRegex = /^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/;
+			
+				// Regular expression to check if string is RGB values
+				const rgbRegex = /^\d{1,3}, ?\d{1,3}, ?\d{1,3}|\d{1,3},?\d{1,3},?\d{1,3}$/;
+
+				if (hexRegex.test(text)) {
+				// String is a hex code
+				return "Hex";
+				} else if (rgbRegex.test(text)) {
+				// String is RGB values
+				return "RGB";
+				} else {
+				// String is neither a hex code nor RGB values
+				return "Neither";
+				}
 			}
 
-			if (isValidHexCode(text) == true) {
+			if (checkHexOrRgb(text) != "Neither") {
 
-				let hex = text
+				let hex;
+				
+				if (checkHexOrRgb(text) == "Hex") {
+					hex = text
+				} else if (checkHexOrRgb(text) == "RGB") {
+					function rgbToHex(r, g, b) {
+						// Make sure each value is between 0 and 255
+						r = Math.max(0, Math.min(255, r));
+						g = Math.max(0, Math.min(255, g));
+						b = Math.max(0, Math.min(255, b));
+					  
+						// Convert each value to a hexadecimal string
+						var hexR = r.toString(16);
+						var hexG = g.toString(16);
+						var hexB = b.toString(16);
+					  
+						// Pad each string with zeros if necessary
+						hexR = hexR.length == 1 ? "0" + hexR : hexR;
+						hexG = hexG.length == 1 ? "0" + hexG : hexG;
+						hexB = hexB.length == 1 ? "0" + hexB : hexB;
+					  
+						// Concatenate the strings and return the result
+						return "#" + hexR + hexG + hexB;
+					  }
+					  
+					function getValuesFromString(str) {
+						let val = str.split(/[ ,]+/);
+
+						// Return the array of integer values
+						return [val[0], val[1], val[2]];
+					}
+
+					hex = rgbToHex(getValuesFromString(text)[0], getValuesFromString(text)[1], getValuesFromString(text)[2])
+				}
 
 				// Find the contrast of the color and then change the text color to white or black depending on the contrast
 
@@ -113,8 +159,8 @@ function activate(context) {
 				}
 
 				globalPanel.webview.html = getWebviewContent(hex.toUpperCase(), getName(hex), getTextColor(hex))
-			}
 
+			}
 		}
 
 	};

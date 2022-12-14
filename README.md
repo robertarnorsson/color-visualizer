@@ -52,4 +52,8 @@ Better Selection Checking Update
 
 Hex To UPPER Update
 
+### 0.2.0
+
+RGB To Hex Selection Update
+
 **Enjoy!**
