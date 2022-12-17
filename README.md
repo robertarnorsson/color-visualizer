@@ -16,6 +16,7 @@ This extension contributes the following settings:
 
 * `color-visualizer.enable`: Enable/disable this extension.
 * `color-visualizer.color-v`: Open the main window.
+* `color-visualizer.color-v-border`: Enable and disables color square border.
 
 
 ## Known Issues
@@ -55,5 +56,9 @@ Hex To UPPER Update
 ### 0.2.0
 
 RGB To Hex Selection Update
+
+### 0.3.0
+
+New Visuals And More Values Update
 
 **Enjoy!**

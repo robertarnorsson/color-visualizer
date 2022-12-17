@@ -30,6 +30,21 @@ function activate(context) {
 		panel.webview.html = getWebviewContent("#FFFFFF", "White", "#000000");
 		globalPanel = panel
 	});
+	
+	let color_border_on = true
+	let color_border_width = 2
+	
+	let disposable2 = vscode.commands.registerCommand('color-visualizer.color-v-border', function () {
+
+		if (color_border_on == true) {
+			color_border_on = false
+			color_border_width = 0
+		} else if (color_border_on == false) {
+			color_border_on = true
+			color_border_width = 2
+		}
+	});
+	
 
 	function updateColor() {
 
@@ -61,12 +76,12 @@ function activate(context) {
 			// Get active editor, selected text and then the text from the selected text
 			const editor = vscode.window.activeTextEditor;
 			const selectedText = editor.selection;
-			const text = editor.document.getText(selectedText);
+			const text = editor.document.getText(selectedText);		  
 
 			// Function to check if a string is a hex code or RGB values
-			function checkHexOrRgb(text) {
+			function checkHexRgbCmyk(text) {
 				// Regular expression to check if string is a hex code
-				const hexRegex = /^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/;
+				const hexRegex = /^#([a-fA-F0-9]{6})$/;
 			
 				// Regular expression to check if string is RGB values
 				const rgbRegex = /^\d{1,3}, ?\d{1,3}, ?\d{1,3}|\d{1,3},?\d{1,3},?\d{1,3}$/;
@@ -75,21 +90,20 @@ function activate(context) {
 				// String is a hex code
 				return "Hex";
 				} else if (rgbRegex.test(text)) {
-				// String is RGB values
-				return "RGB";
+					return "RGB";
 				} else {
 				// String is neither a hex code nor RGB values
 				return "Neither";
 				}
 			}
 
-			if (checkHexOrRgb(text) != "Neither") {
+			if (checkHexRgbCmyk(text) != "Neither") {
 
-				let hex;
+				let hex = "#FFFFFF";
 				
-				if (checkHexOrRgb(text) == "Hex") {
+				if (checkHexRgbCmyk(text) == "Hex") {
 					hex = text
-				} else if (checkHexOrRgb(text) == "RGB") {
+				} else if (checkHexRgbCmyk(text) == "RGB") {
 					function rgbToHex(r, g, b) {
 						// Make sure each value is between 0 and 255
 						r = Math.max(0, Math.min(255, r));
@@ -110,76 +124,261 @@ function activate(context) {
 						return "#" + hexR + hexG + hexB;
 					  }
 					  
-					function getValuesFromString(str) {
+					function getRgbFromString(str) {
 						let val = str.split(/[ ,]+/);
 
 						// Return the array of integer values
 						return [val[0], val[1], val[2]];
 					}
 
-					hex = rgbToHex(getValuesFromString(text)[0], getValuesFromString(text)[1], getValuesFromString(text)[2])
+					hex = rgbToHex(getRgbFromString(text)[0], getRgbFromString(text)[1], getRgbFromString(text)[2])
+				} else {
+					hex = "#FFFFFF"
 				}
+
+				// ###################################
+
+				// Convertions
+
+				// ###################################
 
 				// Find the contrast of the color and then change the text color to white or black depending on the contrast
 
-				function getRGB(c) {
-					return parseInt(c, 16) || c;
+				function findContrast(hex) {
+					function getRGB(c) {
+						return parseInt(c, 16) || c;
+					}
+					
+					function getsRGB(c) {
+						return getRGB(c) / 255 <= 0.03928
+						? getRGB(c) / 255 / 12.92
+						: Math.pow((getRGB(c) / 255 + 0.055) / 1.055, 2.4);
+					}
+					
+					function getLuminance(hexColor) {
+						return (
+						0.2126 * getsRGB(hexColor.substr(1, 2)) +
+						0.7152 * getsRGB(hexColor.substr(3, 2)) +
+						0.0722 * getsRGB(hexColor.substr(-2))
+						);
+					}
+					
+					function getContrast(f, b) {
+						const L1 = getLuminance(f);
+						const L2 = getLuminance(b);
+						return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+					}
+					
+					function getTextColor(bgColor) {
+						const whiteContrast = getContrast(bgColor, "#ffffff");
+						const blackContrast = getContrast(bgColor, "#000000");
+						const bordertrans = getContrast(bgColor, "#ffffff");
+						const borderblack = getContrast(bgColor, "#000000");
+					
+						return [whiteContrast > blackContrast ? "#ffffff" : "#000000", borderblack > bordertrans ? "transparent" : "#ffffff"];
+					}
+
+					return getTextColor(hex)
 				}
+
+				function hexToRgb(hex) {
+
+					function convhexToRgb(hex) {
+						// Parse the hexadecimal color code
+						let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+					
+						// If the color code is invalid, return null
+						if (!result) return null;
+					
+						// Otherwise, return the RGB value as an array of numbers
+						return [
+							parseInt(result[1], 16),
+							parseInt(result[2], 16),
+							parseInt(result[3], 16)
+						];
+					}
+
+					function makeRgbString(hex) {
+						return convhexToRgb(hex)[0]+", "+convhexToRgb(hex)[1]+", "+convhexToRgb(hex)[2]
+					}
 				
-				function getsRGB(c) {
-					return getRGB(c) / 255 <= 0.03928
-					? getRGB(c) / 255 / 12.92
-					: Math.pow((getRGB(c) / 255 + 0.055) / 1.055, 2.4);
+					return makeRgbString(hex)
 				}
-				
-				function getLuminance(hexColor) {
-					return (
-					0.2126 * getsRGB(hexColor.substr(1, 2)) +
-					0.7152 * getsRGB(hexColor.substr(3, 2)) +
-					0.0722 * getsRGB(hexColor.substr(-2))
-					);
+
+				function hexToCmyk(hex) {
+
+					function convhexToCmyk(hex) {
+						// Parse the hexadecimal color code
+						let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+					
+						// If the color code is invalid, return null
+						if (!result) return null;
+					
+						// Otherwise, return the RGB value as an array of numbers
+						return [
+							parseInt(result[1], 16),
+							parseInt(result[2], 16),
+							parseInt(result[3], 16)
+						];
+					}
+
+					function floatToInt(x) {
+						return (x < 0 ? Math.ceil(x) : Math.floor(x));
+					}
+
+					function rgbToCmyk(r, g, b) {
+						var c = 1 - (r / 255);
+						var m = 1 - (g / 255);
+						var y = 1 - (b / 255);
+					  
+						var k = Math.min(c, m, y);
+					  
+						if (k == 1) {
+						  return [0, 0, 0, 1];
+						}
+					  
+						c = (c - k) / (1 - k);
+						m = (m - k) / (1 - k);
+						y = (y - k) / (1 - k);
+
+						c = c * 100;
+						m = m * 100;
+						y = y * 100;
+						k = k * 100;
+
+						c = floatToInt(c);
+						m = floatToInt(m);
+						y = floatToInt(y);
+						k = floatToInt(k);
+					  
+						return [c, m, y, k];
+					}
+
+					var r = convhexToCmyk(hex)[0];
+					var g = convhexToCmyk(hex)[1];
+					var b = convhexToCmyk(hex)[2];
+
+					function makeCmykString(r, g ,b) {
+						return rgbToCmyk(r, g, b)[0]+", "+rgbToCmyk(r, g, b)[1]+", "+rgbToCmyk(r, g, b)[2]+", "+rgbToCmyk(r, g, b)[3]
+					}
+
+					return makeCmykString(r, g, b)
 				}
-				
-				function getContrast(f, b) {
-					const L1 = getLuminance(f);
-					const L2 = getLuminance(b);
-					return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+
+				function hexToHsb(hex) {
+					function convhexToHsb(hex) {
+						// Parse the hexadecimal color code
+						let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+					
+						// If the color code is invalid, return null
+						if (!result) return null;
+					
+						// Otherwise, return the RGB value as an array of numbers
+						return [
+							parseInt(result[1], 16),
+							parseInt(result[2], 16),
+							parseInt(result[3], 16)
+						];
+					}
+
+					function floatToInt(x) {
+						return (x < 0 ? Math.ceil(x) : Math.floor(x));
+					}
+
+					function rgbToHsb(r, g, b) {
+						function RGBToHSB(r, g, b) {
+							// Normalize RGB values
+							r /= 255;
+							g /= 255;
+							b /= 255;
+						  
+							// Find the maximum and minimum RGB values
+							let max = Math.max(r, g, b);
+							let min = Math.min(r, g, b);
+						  
+							// Initialize HSB values
+							let h, s, v = max;
+						  
+							// Calculate Saturation
+							let d = max - min;
+							s = max == 0 ? 0 : d / max;
+						  
+							// Calculate Hue
+							if (max == min) {
+							  h = 0; // No color, it's a shade of gray
+							} else {
+							  switch (max) {
+								case r:
+								  h = (g - b) / d + (g < b ? 6 : 0);
+								  break;
+								case g:
+								  h = (b - r) / d + 2;
+								  break;
+								case b:
+								  h = (r - g) / d + 4;
+								  break;
+							  }
+							  h /= 6;
+							}
+							
+							h = h * 100
+							s = s * 100
+							v = b * 100
+						  
+							// Return the HSB values as an object
+							return [h, s, v];
+						  }
+						var h = RGBToHSB(r, g, b)[0];
+						var s = RGBToHSB(r, g, b)[1];
+						var b = RGBToHSB(r, g, b)[2];
+
+						h = floatToInt(h);
+						s = floatToInt(s);
+						b = floatToInt(b);
+
+						return [h, s, b];
+					}
+					return rgbToHsb(convhexToHsb(hex)[0], convhexToHsb(hex)[1], convhexToHsb(hex)[2]);
 				}
+
 				
-				function getTextColor(bgColor) {
-					const whiteContrast = getContrast(bgColor, "#ffffff");
-					const blackContrast = getContrast(bgColor, "#000000");
-				
-					return whiteContrast > blackContrast ? "#ffffff" : "#000000";
-				}
 				
 				// Get color name
 				function getName(hex) {
 					return ntc.name(hex)[1]
 				}
 
-				globalPanel.webview.html = getWebviewContent(hex.toUpperCase(), getName(hex), getTextColor(hex))
+				globalPanel.webview.html = getWebviewContent(hex.toUpperCase(), hexToRgb(hex), hexToCmyk(hex), hexToHsb(hex), getName(hex), findContrast(hex)[0], findContrast(hex)[1], color_border_width)
 
 			}
 		}
 
 	};
-	setInterval(updateColor, 500)
+	setInterval(updateColor, 1000)
 
 	context.subscriptions.push(disposable1);
+	context.subscriptions.push(disposable2);
 	}
 
-function getWebviewContent(colorhex, colorname, textcolorHB) {
+function getWebviewContent(colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW) {
 	return `
 	<!DOCTYPE html>
-	<html>
+	<html lang="en">
 	<head>
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style>
 	.square {
 	  	width: 100%;
 	  	height: 450px;
 	  	background-color: ${colorhex};
+		border-color: ${hexbordercolor};
+		border-width: ${cBorderW}px;
+		border-style: solid;
+		border-radius: 25px;
+		margin-top: 30px;
+		margin-left: 30px;
+		margin-right: 30px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -187,6 +386,14 @@ function getWebviewContent(colorhex, colorname, textcolorHB) {
 		flex-direction: column;
 	}
 	.c {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		flex-direction: column;
+	}
+	.c1 {
+		width: 100%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -212,7 +419,7 @@ function getWebviewContent(colorhex, colorname, textcolorHB) {
 		color: ${textcolorHB};
 		border: none;
 		background: none;
-		margin-botton: 30px;
+		margin-botton: 15px;
 		padding: 0;
 	}
 	.squaretextname {
@@ -226,17 +433,111 @@ function getWebviewContent(colorhex, colorname, textcolorHB) {
 		margin: 0;
 		padding: 0;
 	}
-	
+	.convertiontext {
+		width: 100%;
+		height: 100%;
+		font-family: Arial, Haettenschweiler, "Franklin Gothic Bold", "Arial Black", "sans-serif";
+		font-size: 45px;
+		line-height: 1.0em;
+		letter-spacing: 0.05em;
+		color: #F5F5F5;
+		border: none;
+		background: none;
+		margin-top: 75px;
+		padding: 0;
+	}
+	.bottomcolorbox {
+		width: 60%;
+		height: 350px;
+		background: #CDCDCD;
+		border-radius: 25px;
+		margin-top: 15px;
+	}
+	table.convColorTable {
+	  font-family: "Arial Black", Gadget, sans-serif;
+	  background-color: #F5F5F5;
+	  width: 100%;
+	  height: 100%;
+	  min-width: 350px;
+	  border-radius: 25px;
+	  text-align: center;
+	  border-collapse: collapse;
+	  cursor: pointer;
+	}
+	table.convColorTable td, table.convColorTable th {
+	  padding: 5px 1px;
+	}
+	table.convColorTable tbody td {
+	  font-size: 17px;
+	  color: #333333;
+	}
+	table.convColorTable tr:nth-child(even) {
+	  background: #E6E6E6;
+	}
+	table.convColorTable tfoot td {
+	  font-size: 14px;
+	}
+	table.convColorTable tfoot .links {
+	  text-align: right;
+	}
+	table.convColorTable tfoot .links a{
+	  display: inline-block;
+	  background: #1C6EA4;
+	  color: #FFFFFF;
+	  padding: 2px 8px;
+	  border-radius: 5px;
+	}
+
+	table.convColorTable tr:hover td:nth-of-type(2):before {
+	font-size: 22px;
+	border-radius: 25px;
+	}
+	.parent:hover .child{ color:  #6C6C6C; }
 	</style>
 	</head>
 	<body>
-	<div class="square">
-		<div class="c">
-			<div class="squaretext">
-				<h3 class="squaretexthex">${colorhex}</h3>
+	<div class="c">
+		<div class="square">
+			<div class="c">
+				<div class="squaretext">
+					<h3 class="squaretexthex">${colorhex}</h3>
+				</div>
+				<div class="squaretext">
+					<h1 class="squaretextname">${colorname}</h1>
+				</div>
 			</div>
-			<div class="squaretext">
-				<h1 class="squaretextname">${colorname}</h1>
+		</div>
+		<div class="c1">
+			<div>
+				<h2 class="convertiontext">Convertion</h2>
+			</div>
+			<div class="c1">
+				<div class="bottomcolorbox">
+					<table class="convColorTable">
+						<tbody>
+							<tr class="parent">
+								<td class="child">NAME</td>
+								<td class="child">${colorname}</td>
+							</tr>
+							<tr class="parent">
+								<td class="child">HEX</td>
+								<td class="child">${colorhex}</td>
+							</tr>
+							<tr class="parent">
+								<td class="child">RGB</td>
+								<td class="child">${colorrgb}</td>
+							</tr>
+							<tr class="parent">
+								<td class="child">CMYK</td>
+								<td class="child">${colorcmyk}</td>
+							</tr>
+							<tr class="parent">
+								<td class="child">HSB</td>
+								<td class="child">${colorhsb}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</div>
 	</div>

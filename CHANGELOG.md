@@ -72,3 +72,22 @@ All notable changes to the "color-visualizer" extension will be documented in th
 ### Added
 
 - Select RGB value and get the right color (123, 32, 5 = #7B2005)
+
+## [0.3.0]
+
+### Changes
+
+- Visual changes
+  - Rounded borders
+  - Margins
+
+### Added
+
+- New command that changes if you want a border color or not
+
+- New table to view:
+  - Name
+  - Hex
+  - RGB
+  - CMYK
+  - HSB
