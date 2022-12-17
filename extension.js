@@ -354,7 +354,7 @@ function activate(context) {
 		}
 
 	};
-	setInterval(updateColor, 1000)
+	setInterval(updateColor, 500)
 
 	context.subscriptions.push(disposable1);
 	context.subscriptions.push(disposable2);
