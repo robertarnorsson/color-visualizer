@@ -4,7 +4,7 @@
   "publisher": "ColorVisuliser",
   "description": "Visualize color codes in the editor",
   "icon": "images/cvl.png",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -13,7 +13,8 @@
   ],
   "activationEvents": [
     "onCommand:color-visualizer.color-v",
-    "onCommand:color-visualizer.color-v-border"
+    "onCommand:color-visualizer.color-v-border",
+    "onCommand:color-visualizer.color-v-change-check-time"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -25,6 +26,10 @@
       {
         "command": "color-visualizer.color-v-border",
         "title": "Color Visualizer Change Border"
+      },
+      {
+        "command": "color-visualizer.color-v-change-check-time",
+        "title": "Color Visualizer Change Check Time"
       }
     ]
   },

@@ -61,4 +61,8 @@ RGB To Hex Selection Update
 
 New Visuals And More Values Update
 
+### 0.3.1
+
+Time Update
+
 **Enjoy!**

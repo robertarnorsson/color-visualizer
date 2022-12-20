@@ -83,7 +83,7 @@ All notable changes to the "color-visualizer" extension will be documented in th
 
 ### Added
 
-- New command that changes if you want a border color or not
+- New command that changes if you want a border or not
 
 - New table to view:
   - Name
@@ -91,3 +91,13 @@ All notable changes to the "color-visualizer" extension will be documented in th
   - RGB
   - CMYK
   - HSB
+
+## [0.3.1]
+
+### Changes
+
+- Time between checking selection is set to 1 second
+
+### Added
+
+- New command that lets you change the time between checking selection

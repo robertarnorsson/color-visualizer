@@ -27,7 +27,8 @@ function activate(context) {
 			{} // Webview options. More on these later.
 		  );
 		// And set its HTML content
-		panel.webview.html = getWebviewContent("#FFFFFF", "White", "#000000");
+		panel.webview.html = getWebviewContent("#FFFFFF", "255, 255, 255", "0, 0, 0, 0", "0, 0, 100", "White", "#000000", "transparent", 2);
+		// colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW
 		globalPanel = panel
 	});
 	
@@ -44,9 +45,27 @@ function activate(context) {
 			color_border_width = 2
 		}
 	});
-	
+
+	let loop_time = 1000
+
+	let disposable3 = vscode.commands.registerCommand('color-visualizer.color-v-change-check-time', function () {
+
+		vscode.window.showInputBox({
+			prompt: 'Enter the prefered time above (1000 = 1 second)',
+		  }).then((input) => {
+			const numbers = input;
+			loop_time = numbers;
+			vscode.window.showInformationMessage(
+			  "The time between each loop is set to: " + numbers + " or " + numbers / 1000 + " seconds"
+			);
+			clearInterval(timer);
+			timer = setInterval(updateColor, loop_time);
+		});
+	});
 
 	function updateColor() {
+
+		const normalhex = "#FFFFFFF"
 
 		// Check if the selection is empty or not
 		function checkSelection() {
@@ -69,6 +88,214 @@ function activate(context) {
 			  	return false;
 			}
 		}
+
+		function updateConvertion(hex) {
+
+			function findContrast(hex) {
+				function getRGB(c) {
+					return parseInt(c, 16) || c;
+				}
+				
+				function getsRGB(c) {
+					return getRGB(c) / 255 <= 0.03928
+					? getRGB(c) / 255 / 12.92
+					: Math.pow((getRGB(c) / 255 + 0.055) / 1.055, 2.4);
+				}
+				
+				function getLuminance(hexColor) {
+					return (
+					0.2126 * getsRGB(hexColor.substr(1, 2)) +
+					0.7152 * getsRGB(hexColor.substr(3, 2)) +
+					0.0722 * getsRGB(hexColor.substr(-2))
+					);
+				}
+				
+				function getContrast(f, b) {
+					const L1 = getLuminance(f);
+					const L2 = getLuminance(b);
+					return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+				}
+				
+				function getTextColor(bgColor) {
+					const whiteContrast = getContrast(bgColor, "#ffffff");
+					const blackContrast = getContrast(bgColor, "#000000");
+					const bordertrans = getContrast(bgColor, "#ffffff");
+					const borderblack = getContrast(bgColor, "#000000");
+				
+					return [whiteContrast > blackContrast ? "#ffffff" : "#000000", borderblack > bordertrans ? "transparent" : "#ffffff"];
+				}
+
+				return getTextColor(hex)
+			}
+
+			function hexToRgb(hex) {
+
+				function convhexToRgb(hex) {
+					// Parse the hexadecimal color code
+					let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+				
+					// If the color code is invalid, return null
+					if (!result) return null;
+				
+					// Otherwise, return the RGB value as an array of numbers
+					return [
+						parseInt(result[1], 16),
+						parseInt(result[2], 16),
+						parseInt(result[3], 16)
+					];
+				}
+
+				function makeRgbString(hex) {
+					return convhexToRgb(hex)[0]+", "+convhexToRgb(hex)[1]+", "+convhexToRgb(hex)[2]
+				}
+			
+				return makeRgbString(hex)
+			}
+
+			function hexToCmyk(hex) {
+
+				function convhexToCmyk(hex) {
+					// Parse the hexadecimal color code
+					let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+				
+					// If the color code is invalid, return null
+					if (!result) return null;
+				
+					// Otherwise, return the RGB value as an array of numbers
+					return [
+						parseInt(result[1], 16),
+						parseInt(result[2], 16),
+						parseInt(result[3], 16)
+					];
+				}
+
+				function floatToInt(x) {
+					return (x < 0 ? Math.ceil(x) : Math.floor(x));
+				}
+
+				function rgbToCmyk(r, g, b) {
+					var c = 1 - (r / 255);
+					var m = 1 - (g / 255);
+					var y = 1 - (b / 255);
+				  
+					var k = Math.min(c, m, y);
+				  
+					if (k == 1) {
+					  return [0, 0, 0, 1];
+					}
+				  
+					c = (c - k) / (1 - k);
+					m = (m - k) / (1 - k);
+					y = (y - k) / (1 - k);
+
+					c = c * 100;
+					m = m * 100;
+					y = y * 100;
+					k = k * 100;
+
+					c = floatToInt(c);
+					m = floatToInt(m);
+					y = floatToInt(y);
+					k = floatToInt(k);
+				  
+					return [c, m, y, k];
+				}
+
+				var r = convhexToCmyk(hex)[0];
+				var g = convhexToCmyk(hex)[1];
+				var b = convhexToCmyk(hex)[2];
+
+				function makeCmykString(r, g ,b) {
+					return rgbToCmyk(r, g, b)[0]+", "+rgbToCmyk(r, g, b)[1]+", "+rgbToCmyk(r, g, b)[2]+", "+rgbToCmyk(r, g, b)[3]
+				}
+
+				return makeCmykString(r, g, b)
+			}
+
+			function hexToHsb(hex) {
+				function convhexToHsb(hex) {
+					// Parse the hexadecimal color code
+					let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+				
+					// If the color code is invalid, return null
+					if (!result) return null;
+				
+					// Otherwise, return the RGB value as an array of numbers
+					return [
+						parseInt(result[1], 16),
+						parseInt(result[2], 16),
+						parseInt(result[3], 16)
+					];
+				}
+
+				function floatToInt(x) {
+					return (x < 0 ? Math.ceil(x) : Math.floor(x));
+				}
+
+				function rgbToHsb(r, g, b) {
+					function RGBToHSB(r, g, b) {
+						// Normalize RGB values
+						r /= 255;
+						g /= 255;
+						b /= 255;
+					  
+						// Find the maximum and minimum RGB values
+						let max = Math.max(r, g, b);
+						let min = Math.min(r, g, b);
+					  
+						// Initialize HSB values
+						let h, s, v = max;
+					  
+						// Calculate Saturation
+						let d = max - min;
+						s = max == 0 ? 0 : d / max;
+					  
+						// Calculate Hue
+						if (max == min) {
+						  h = 0; // No color, it's a shade of gray
+						} else {
+						  switch (max) {
+							case r:
+							  h = (g - b) / d + (g < b ? 6 : 0);
+							  break;
+							case g:
+							  h = (b - r) / d + 2;
+							  break;
+							case b:
+							  h = (r - g) / d + 4;
+							  break;
+						  }
+						  h /= 6;
+						}
+						
+						h = h * 100
+						s = s * 100
+						v = b * 100
+					  
+						// Return the HSB values as an object
+						return [h, s, v];
+					  }
+					var h = RGBToHSB(r, g, b)[0];
+					var s = RGBToHSB(r, g, b)[1];
+					var b = RGBToHSB(r, g, b)[2];
+
+					h = floatToInt(h);
+					s = floatToInt(s);
+					b = floatToInt(b);
+
+					return [h, s, b];
+				}
+				return rgbToHsb(convhexToHsb(hex)[0], convhexToHsb(hex)[1], convhexToHsb(hex)[2]);
+			}
+			
+			// Get color name
+			function getName(hex) {
+				return ntc.name(hex)[1]
+			}
+
+			return [hex.toUpperCase(), hexToRgb(hex), hexToCmyk(hex), hexToHsb(hex), getName(hex), findContrast(hex)[0], findContrast(hex)[1], color_border_width]
+
+		}
 		
 		// An if statement to run code if the selection is not empty
 		if (checkSelection() == true) {
@@ -79,7 +306,7 @@ function activate(context) {
 			const text = editor.document.getText(selectedText);		  
 
 			// Function to check if a string is a hex code or RGB values
-			function checkHexRgbCmyk(text) {
+			function checkHexRgb(text) {
 				// Regular expression to check if string is a hex code
 				const hexRegex = /^#([a-fA-F0-9]{6})$/;
 			
@@ -97,13 +324,13 @@ function activate(context) {
 				}
 			}
 
-			if (checkHexRgbCmyk(text) != "Neither") {
+			if (checkHexRgb(text) != "Neither") {
 
 				let hex = "#FFFFFF";
 				
-				if (checkHexRgbCmyk(text) == "Hex") {
+				if (checkHexRgb(text) == "Hex") {
 					hex = text
-				} else if (checkHexRgbCmyk(text) == "RGB") {
+				} else if (checkHexRgb(text) == "RGB") {
 					function rgbToHex(r, g, b) {
 						// Make sure each value is between 0 and 255
 						r = Math.max(0, Math.min(255, r));
@@ -133,231 +360,22 @@ function activate(context) {
 
 					hex = rgbToHex(getRgbFromString(text)[0], getRgbFromString(text)[1], getRgbFromString(text)[2])
 				} else {
-					hex = "#FFFFFF"
-				}
+					hex = normalhex
+				}			
 
-				// ###################################
-
-				// Convertions
-
-				// ###################################
-
-				// Find the contrast of the color and then change the text color to white or black depending on the contrast
-
-				function findContrast(hex) {
-					function getRGB(c) {
-						return parseInt(c, 16) || c;
-					}
-					
-					function getsRGB(c) {
-						return getRGB(c) / 255 <= 0.03928
-						? getRGB(c) / 255 / 12.92
-						: Math.pow((getRGB(c) / 255 + 0.055) / 1.055, 2.4);
-					}
-					
-					function getLuminance(hexColor) {
-						return (
-						0.2126 * getsRGB(hexColor.substr(1, 2)) +
-						0.7152 * getsRGB(hexColor.substr(3, 2)) +
-						0.0722 * getsRGB(hexColor.substr(-2))
-						);
-					}
-					
-					function getContrast(f, b) {
-						const L1 = getLuminance(f);
-						const L2 = getLuminance(b);
-						return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
-					}
-					
-					function getTextColor(bgColor) {
-						const whiteContrast = getContrast(bgColor, "#ffffff");
-						const blackContrast = getContrast(bgColor, "#000000");
-						const bordertrans = getContrast(bgColor, "#ffffff");
-						const borderblack = getContrast(bgColor, "#000000");
-					
-						return [whiteContrast > blackContrast ? "#ffffff" : "#000000", borderblack > bordertrans ? "transparent" : "#ffffff"];
-					}
-
-					return getTextColor(hex)
-				}
-
-				function hexToRgb(hex) {
-
-					function convhexToRgb(hex) {
-						// Parse the hexadecimal color code
-						let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-					
-						// If the color code is invalid, return null
-						if (!result) return null;
-					
-						// Otherwise, return the RGB value as an array of numbers
-						return [
-							parseInt(result[1], 16),
-							parseInt(result[2], 16),
-							parseInt(result[3], 16)
-						];
-					}
-
-					function makeRgbString(hex) {
-						return convhexToRgb(hex)[0]+", "+convhexToRgb(hex)[1]+", "+convhexToRgb(hex)[2]
-					}
-				
-					return makeRgbString(hex)
-				}
-
-				function hexToCmyk(hex) {
-
-					function convhexToCmyk(hex) {
-						// Parse the hexadecimal color code
-						let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-					
-						// If the color code is invalid, return null
-						if (!result) return null;
-					
-						// Otherwise, return the RGB value as an array of numbers
-						return [
-							parseInt(result[1], 16),
-							parseInt(result[2], 16),
-							parseInt(result[3], 16)
-						];
-					}
-
-					function floatToInt(x) {
-						return (x < 0 ? Math.ceil(x) : Math.floor(x));
-					}
-
-					function rgbToCmyk(r, g, b) {
-						var c = 1 - (r / 255);
-						var m = 1 - (g / 255);
-						var y = 1 - (b / 255);
-					  
-						var k = Math.min(c, m, y);
-					  
-						if (k == 1) {
-						  return [0, 0, 0, 1];
-						}
-					  
-						c = (c - k) / (1 - k);
-						m = (m - k) / (1 - k);
-						y = (y - k) / (1 - k);
-
-						c = c * 100;
-						m = m * 100;
-						y = y * 100;
-						k = k * 100;
-
-						c = floatToInt(c);
-						m = floatToInt(m);
-						y = floatToInt(y);
-						k = floatToInt(k);
-					  
-						return [c, m, y, k];
-					}
-
-					var r = convhexToCmyk(hex)[0];
-					var g = convhexToCmyk(hex)[1];
-					var b = convhexToCmyk(hex)[2];
-
-					function makeCmykString(r, g ,b) {
-						return rgbToCmyk(r, g, b)[0]+", "+rgbToCmyk(r, g, b)[1]+", "+rgbToCmyk(r, g, b)[2]+", "+rgbToCmyk(r, g, b)[3]
-					}
-
-					return makeCmykString(r, g, b)
-				}
-
-				function hexToHsb(hex) {
-					function convhexToHsb(hex) {
-						// Parse the hexadecimal color code
-						let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-					
-						// If the color code is invalid, return null
-						if (!result) return null;
-					
-						// Otherwise, return the RGB value as an array of numbers
-						return [
-							parseInt(result[1], 16),
-							parseInt(result[2], 16),
-							parseInt(result[3], 16)
-						];
-					}
-
-					function floatToInt(x) {
-						return (x < 0 ? Math.ceil(x) : Math.floor(x));
-					}
-
-					function rgbToHsb(r, g, b) {
-						function RGBToHSB(r, g, b) {
-							// Normalize RGB values
-							r /= 255;
-							g /= 255;
-							b /= 255;
-						  
-							// Find the maximum and minimum RGB values
-							let max = Math.max(r, g, b);
-							let min = Math.min(r, g, b);
-						  
-							// Initialize HSB values
-							let h, s, v = max;
-						  
-							// Calculate Saturation
-							let d = max - min;
-							s = max == 0 ? 0 : d / max;
-						  
-							// Calculate Hue
-							if (max == min) {
-							  h = 0; // No color, it's a shade of gray
-							} else {
-							  switch (max) {
-								case r:
-								  h = (g - b) / d + (g < b ? 6 : 0);
-								  break;
-								case g:
-								  h = (b - r) / d + 2;
-								  break;
-								case b:
-								  h = (r - g) / d + 4;
-								  break;
-							  }
-							  h /= 6;
-							}
-							
-							h = h * 100
-							s = s * 100
-							v = b * 100
-						  
-							// Return the HSB values as an object
-							return [h, s, v];
-						  }
-						var h = RGBToHSB(r, g, b)[0];
-						var s = RGBToHSB(r, g, b)[1];
-						var b = RGBToHSB(r, g, b)[2];
-
-						h = floatToInt(h);
-						s = floatToInt(s);
-						b = floatToInt(b);
-
-						return [h, s, b];
-					}
-					return rgbToHsb(convhexToHsb(hex)[0], convhexToHsb(hex)[1], convhexToHsb(hex)[2]);
-				}
-
-				
-				
-				// Get color name
-				function getName(hex) {
-					return ntc.name(hex)[1]
-				}
-
-				globalPanel.webview.html = getWebviewContent(hex.toUpperCase(), hexToRgb(hex), hexToCmyk(hex), hexToHsb(hex), getName(hex), findContrast(hex)[0], findContrast(hex)[1], color_border_width)
-
+				let values = updateConvertion(hex)
+				globalPanel.webview.html = getWebviewContent(values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7])
 			}
+		} else if (checkSelection() == false) {
+			let values = updateConvertion(normalhex)
+			globalPanel.webview.html = getWebviewContent(values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7])
 		}
-
 	};
-	setInterval(updateColor, 500)
+	let timer = setInterval(updateColor, loop_time);
 
 	context.subscriptions.push(disposable1);
 	context.subscriptions.push(disposable2);
+	context.subscriptions.push(disposable3);
 	}
 
 function getWebviewContent(colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW) {
