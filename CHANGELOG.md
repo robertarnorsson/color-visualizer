@@ -101,3 +101,13 @@ All notable changes to the "color-visualizer" extension will be documented in th
 ### Added
 
 - New command that lets you change the time between checking selection
+
+## [0.3.2]
+
+### Changes
+
+- New simple view
+
+### Added
+
+- New command for changeing between simple and advanced views **[test]**

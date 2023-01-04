@@ -65,4 +65,8 @@ New Visuals And More Values Update
 
 Time Update
 
+### 0.3.2
+
+The Simple Update
+
 **Enjoy!**

@@ -25,15 +25,23 @@ function activate(context) {
 			'Color Visualizer', // Title of the panel displayed to the user
 			vscode.ViewColumn.Beside, // Editor column to show the new webview panel in.
 			{} // Webview options. More on these later.
-		  );
-		// And set its HTML content
-		panel.webview.html = getWebviewContent("#FFFFFF", "255, 255, 255", "0, 0, 0, 0", "0, 0, 100", "White", "#000000", "transparent", 2);
-		// colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW
+		);
+
 		globalPanel = panel
+		// And set its HTML content
+		if (advanced_html == true) {
+			globalPanel.webview.html = getAdvancedWebview("#FFFFFF", "255, 255, 255", "0, 0, 0, 0", "0, 0, 100", "White", "#000000", "transparent", 2)
+		} else {
+		globalPanel.webview.html = getSimpleWebview("#FFFFFF", "White", "#000000", "transparent", 2)
+		}
+		// colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW
+
 	});
 	
 	let color_border_on = true
 	let color_border_width = 2
+
+	let advanced_html = true;
 	
 	let disposable2 = vscode.commands.registerCommand('color-visualizer.color-v-border', function () {
 
@@ -61,6 +69,24 @@ function activate(context) {
 			clearInterval(timer);
 			timer = setInterval(updateColor, loop_time);
 		});
+	});
+
+	let disposable4 = vscode.commands.registerCommand('color-visualizer.color-v-change-page', function () {
+
+		let current_view
+
+		if (advanced_html == true) {
+			advanced_html = false
+			current_view = "Simple"
+		} else if (advanced_html == false) {
+			advanced_html = true
+			current_view = "Advanced"
+		}
+
+		vscode.window.showInformationMessage(
+			"Changed page to: "+current_view
+		);
+
 	});
 
 	function updateColor() {
@@ -294,7 +320,7 @@ function activate(context) {
 			}
 
 			return [hex.toUpperCase(), hexToRgb(hex), hexToCmyk(hex), hexToHsb(hex), getName(hex), findContrast(hex)[0], findContrast(hex)[1], color_border_width]
-
+			
 		}
 		
 		// An if statement to run code if the selection is not empty
@@ -361,14 +387,16 @@ function activate(context) {
 					hex = rgbToHex(getRgbFromString(text)[0], getRgbFromString(text)[1], getRgbFromString(text)[2])
 				} else {
 					hex = normalhex
-				}			
+				}
 
 				let values = updateConvertion(hex)
-				globalPanel.webview.html = getWebviewContent(values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7])
+				
+				if (advanced_html == true) {
+					globalPanel.webview.html = getAdvancedWebview(values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7])
+				} else {
+				globalPanel.webview.html = getSimpleWebview(values[0],values[4],values[5],values[6],values[7])
+				}
 			}
-		} else if (checkSelection() == false) {
-			let values = updateConvertion(normalhex)
-			globalPanel.webview.html = getWebviewContent(values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7])
 		}
 	};
 	let timer = setInterval(updateColor, loop_time);
@@ -376,9 +404,95 @@ function activate(context) {
 	context.subscriptions.push(disposable1);
 	context.subscriptions.push(disposable2);
 	context.subscriptions.push(disposable3);
+	context.subscriptions.push(disposable4);
 	}
 
-function getWebviewContent(colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW) {
+	function getSimpleWebview(colorhex, colorname, textcolorHB, hexbordercolor, cBorderW) {
+	return `
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+	.square {
+	  	width: 100%;
+	  	height: 450px;
+	  	background-color: ${colorhex};
+		border-color: ${hexbordercolor};
+		border-width: ${cBorderW}px;
+		border-style: solid;
+		border-radius: 25px;
+		margin-top: 30px;
+		margin-left: 30px;
+		margin-right: 30px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		flex-direction: column;
+	}
+	.c {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		flex-direction: column;
+	}
+	.squaretext {
+	  	width: 100%;
+		height: 100%;
+		font-family: Arial, Helvetica, sans-serif;
+		font-size:10vw;
+		border: none;
+		background: none;
+		margin: 0;
+		padding: 0;
+		text-align: center;
+	}
+	.squaretexthex {
+	  	width: 100%;
+		height: 100%;
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 15px;
+		color: ${textcolorHB};
+		border: none;
+		background: none;
+		margin-botton: 15px;
+		padding: 0;
+	}
+	.squaretextname {
+	  	width: 100%;
+		height: 100%;
+		font-family: Arial, Helvetica, sans-serif;
+		font-size: 40px;
+		color: ${textcolorHB};
+		border: none;
+		background: none;
+		margin: 0;
+		padding: 0;
+	}
+	</style>
+	</head>
+	<body>
+	<div class="c">
+		<div class="square">
+			<div class="c">
+				<div class="squaretext">
+					<h3 class="squaretexthex">${colorhex}</h3>
+				</div>
+				<div class="squaretext">
+					<h1 class="squaretextname">${colorname}</h1>
+				</div>
+			</div>
+		</div>
+	</div>
+	</body>
+	</html>
+	`;
+}
+
+function getAdvancedWebview(colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW) {
 	return `
 	<!DOCTYPE html>
 	<html lang="en">
