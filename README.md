@@ -17,6 +17,7 @@ This extension contributes the following settings:
 * `color-visualizer.enable`: Enable/disable this extension.
 * `color-visualizer.color-v`: Open the main window.
 * `color-visualizer.color-v-border`: Enable and disables color square border.
+* `color-visualizer.color-v-change-page`: Change between advanced or simple view.
 
 
 ## Known Issues
