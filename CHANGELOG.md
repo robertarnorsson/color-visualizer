@@ -110,4 +110,14 @@ All notable changes to the "color-visualizer" extension will be documented in th
 
 ### Added
 
-- New command for changeing between simple and advanced views **[test]**
+- New command for changeing between simple and advanced views
+
+## [0.4.0]
+
+### Changes
+
+- Changed file structure of the extention
+
+### Added
+
+- Automatic save settings like border or update time

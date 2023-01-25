@@ -24,10 +24,6 @@ This extension contributes the following settings:
 
 There are no current know issues (if you find any issues please contact me: **colorvisualizerex@gmail.com**)
 
-## What to expect
-
-In the future you will be able to select **RGB** and **CMYK** values and see the color and hex
-
 ## Release Notes
 
 ### 0.1.1
@@ -69,5 +65,9 @@ Time Update
 ### 0.3.2
 
 The Simple Update
+
+### 0.4.0
+
+Save Your Preference Update
 
 **Enjoy!**
