@@ -2,6 +2,23 @@
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const ntc = require('ntcjs');
+const path = require('path');
+
+const fileManager = require('./data_manager/save_load')
+
+const hexToRgb = require('./convertions/HEX_to_RGB')
+const hexToCmyk = require('./convertions/HEX_to_CMYK')
+const hexToHsb = require('./convertions/HEX_to_HSB')
+
+const findContrast = require('./convertions/find_contrast/findContrast')
+
+const filepath_border = path.join(__dirname, 'data_manager', 'data', 'border.json');
+const filepath_time = path.join(__dirname, 'data_manager', 'data', 'time.json');
+const filepath_page = path.join(__dirname, 'data_manager', 'data', 'page.json');
+
+let border_var = fileManager.loadFromJson(filepath_border);
+let time_var = fileManager.loadFromJson(filepath_time);
+let page_var = fileManager.loadFromJson(filepath_page);
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -27,9 +44,11 @@ function activate(context) {
 			{} // Webview options. More on these later.
 		);
 
+		page_var = fileManager.loadFromJson(filepath_page);
+
 		globalPanel = panel
 		// And set its HTML content
-		if (advanced_html == true) {
+		if (page_var == true) {
 			globalPanel.webview.html = getAdvancedWebview("#FFFFFF", "255, 255, 255", "0, 0, 0, 0", "0, 0, 100", "White", "#000000", "transparent", 2)
 		} else {
 		globalPanel.webview.html = getSimpleWebview("#FFFFFF", "White", "#000000", "transparent", 2)
@@ -37,50 +56,54 @@ function activate(context) {
 		// colorhex, colorrgb, colorcmyk, colorhsb, colorname, textcolorHB, hexbordercolor, cBorderW
 
 	});
-	
-	let color_border_on = true
-	let color_border_width = 2
 
-	let advanced_html = true;
+	let color_border_width = 2
 	
 	let disposable2 = vscode.commands.registerCommand('color-visualizer.color-v-border', function () {
 
-		if (color_border_on == true) {
-			color_border_on = false
+		border_var = fileManager.loadFromJson(filepath_border);
+
+		if (border_var == true) {
+			border_var = false
 			color_border_width = 0
-		} else if (color_border_on == false) {
-			color_border_on = true
+			fileManager.saveToJson(filepath_border, border_var);
+		} else if (border_var == false) {
+			border_var = true
 			color_border_width = 2
+			fileManager.saveToJson(filepath_border, border_var);
 		}
 	});
 
-	let loop_time = 1000
-
 	let disposable3 = vscode.commands.registerCommand('color-visualizer.color-v-change-check-time', function () {
+
+		time_var = fileManager.loadFromJson(filepath_time);
 
 		vscode.window.showInputBox({
 			prompt: 'Enter the prefered time above (1000 = 1 second)',
 		  }).then((input) => {
 			const numbers = input;
-			loop_time = numbers;
+			time_var = numbers;
 			vscode.window.showInformationMessage(
 			  "The time between each loop is set to: " + numbers + " or " + numbers / 1000 + " seconds"
 			);
 			clearInterval(timer);
-			timer = setInterval(updateColor, loop_time);
+			timer = setInterval(updateColor, time_var);
+			fileManager.saveToJson(filepath_time, numbers);
 		});
 	});
 
 	let disposable4 = vscode.commands.registerCommand('color-visualizer.color-v-change-page', function () {
 
-		let current_view
+		let current_view = fileManager.loadFromJson(filepath_page)
 
-		if (advanced_html == true) {
-			advanced_html = false
+		if (page_var == true) {
+			page_var = false
 			current_view = "Simple"
-		} else if (advanced_html == false) {
-			advanced_html = true
+			fileManager.saveToJson(filepath_page, page_var);
+		} else if (page_var == false) {
+			page_var = true
 			current_view = "Advanced"
+			fileManager.saveToJson(filepath_page, page_var);
 		}
 
 		vscode.window.showInformationMessage(
@@ -116,203 +139,6 @@ function activate(context) {
 		}
 
 		function updateConvertion(hex) {
-
-			function findContrast(hex) {
-				function getRGB(c) {
-					return parseInt(c, 16) || c;
-				}
-				
-				function getsRGB(c) {
-					return getRGB(c) / 255 <= 0.03928
-					? getRGB(c) / 255 / 12.92
-					: Math.pow((getRGB(c) / 255 + 0.055) / 1.055, 2.4);
-				}
-				
-				function getLuminance(hexColor) {
-					return (
-					0.2126 * getsRGB(hexColor.substr(1, 2)) +
-					0.7152 * getsRGB(hexColor.substr(3, 2)) +
-					0.0722 * getsRGB(hexColor.substr(-2))
-					);
-				}
-				
-				function getContrast(f, b) {
-					const L1 = getLuminance(f);
-					const L2 = getLuminance(b);
-					return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
-				}
-				
-				function getTextColor(bgColor) {
-					const whiteContrast = getContrast(bgColor, "#ffffff");
-					const blackContrast = getContrast(bgColor, "#000000");
-					const bordertrans = getContrast(bgColor, "#ffffff");
-					const borderblack = getContrast(bgColor, "#000000");
-				
-					return [whiteContrast > blackContrast ? "#ffffff" : "#000000", borderblack > bordertrans ? "transparent" : "#ffffff"];
-				}
-
-				return getTextColor(hex)
-			}
-
-			function hexToRgb(hex) {
-
-				function convhexToRgb(hex) {
-					// Parse the hexadecimal color code
-					let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-				
-					// If the color code is invalid, return null
-					if (!result) return null;
-				
-					// Otherwise, return the RGB value as an array of numbers
-					return [
-						parseInt(result[1], 16),
-						parseInt(result[2], 16),
-						parseInt(result[3], 16)
-					];
-				}
-
-				function makeRgbString(hex) {
-					return convhexToRgb(hex)[0]+", "+convhexToRgb(hex)[1]+", "+convhexToRgb(hex)[2]
-				}
-			
-				return makeRgbString(hex)
-			}
-
-			function hexToCmyk(hex) {
-
-				function convhexToCmyk(hex) {
-					// Parse the hexadecimal color code
-					let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-				
-					// If the color code is invalid, return null
-					if (!result) return null;
-				
-					// Otherwise, return the RGB value as an array of numbers
-					return [
-						parseInt(result[1], 16),
-						parseInt(result[2], 16),
-						parseInt(result[3], 16)
-					];
-				}
-
-				function floatToInt(x) {
-					return (x < 0 ? Math.ceil(x) : Math.floor(x));
-				}
-
-				function rgbToCmyk(r, g, b) {
-					var c = 1 - (r / 255);
-					var m = 1 - (g / 255);
-					var y = 1 - (b / 255);
-				  
-					var k = Math.min(c, m, y);
-				  
-					if (k == 1) {
-					  return [0, 0, 0, 1];
-					}
-				  
-					c = (c - k) / (1 - k);
-					m = (m - k) / (1 - k);
-					y = (y - k) / (1 - k);
-
-					c = c * 100;
-					m = m * 100;
-					y = y * 100;
-					k = k * 100;
-
-					c = floatToInt(c);
-					m = floatToInt(m);
-					y = floatToInt(y);
-					k = floatToInt(k);
-				  
-					return [c, m, y, k];
-				}
-
-				var r = convhexToCmyk(hex)[0];
-				var g = convhexToCmyk(hex)[1];
-				var b = convhexToCmyk(hex)[2];
-
-				function makeCmykString(r, g ,b) {
-					return rgbToCmyk(r, g, b)[0]+", "+rgbToCmyk(r, g, b)[1]+", "+rgbToCmyk(r, g, b)[2]+", "+rgbToCmyk(r, g, b)[3]
-				}
-
-				return makeCmykString(r, g, b)
-			}
-
-			function hexToHsb(hex) {
-				function convhexToHsb(hex) {
-					// Parse the hexadecimal color code
-					let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-				
-					// If the color code is invalid, return null
-					if (!result) return null;
-				
-					// Otherwise, return the RGB value as an array of numbers
-					return [
-						parseInt(result[1], 16),
-						parseInt(result[2], 16),
-						parseInt(result[3], 16)
-					];
-				}
-
-				function floatToInt(x) {
-					return (x < 0 ? Math.ceil(x) : Math.floor(x));
-				}
-
-				function rgbToHsb(r, g, b) {
-					function RGBToHSB(r, g, b) {
-						// Normalize RGB values
-						r /= 255;
-						g /= 255;
-						b /= 255;
-					  
-						// Find the maximum and minimum RGB values
-						let max = Math.max(r, g, b);
-						let min = Math.min(r, g, b);
-					  
-						// Initialize HSB values
-						let h, s, v = max;
-					  
-						// Calculate Saturation
-						let d = max - min;
-						s = max == 0 ? 0 : d / max;
-					  
-						// Calculate Hue
-						if (max == min) {
-						  h = 0; // No color, it's a shade of gray
-						} else {
-						  switch (max) {
-							case r:
-							  h = (g - b) / d + (g < b ? 6 : 0);
-							  break;
-							case g:
-							  h = (b - r) / d + 2;
-							  break;
-							case b:
-							  h = (r - g) / d + 4;
-							  break;
-						  }
-						  h /= 6;
-						}
-						
-						h = h * 100
-						s = s * 100
-						v = b * 100
-					  
-						// Return the HSB values as an object
-						return [h, s, v];
-					  }
-					var h = RGBToHSB(r, g, b)[0];
-					var s = RGBToHSB(r, g, b)[1];
-					var b = RGBToHSB(r, g, b)[2];
-
-					h = floatToInt(h);
-					s = floatToInt(s);
-					b = floatToInt(b);
-
-					return [h, s, b];
-				}
-				return rgbToHsb(convhexToHsb(hex)[0], convhexToHsb(hex)[1], convhexToHsb(hex)[2]);
-			}
 			
 			// Get color name
 			function getName(hex) {
@@ -391,7 +217,7 @@ function activate(context) {
 
 				let values = updateConvertion(hex)
 				
-				if (advanced_html == true) {
+				if (page_var == true) {
 					globalPanel.webview.html = getAdvancedWebview(values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7])
 				} else {
 				globalPanel.webview.html = getSimpleWebview(values[0],values[4],values[5],values[6],values[7])
@@ -399,7 +225,7 @@ function activate(context) {
 			}
 		}
 	};
-	let timer = setInterval(updateColor, loop_time);
+	let timer = setInterval(updateColor, time_var);
 
 	context.subscriptions.push(disposable1);
 	context.subscriptions.push(disposable2);
